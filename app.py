@@ -84,6 +84,9 @@ def ocr():
 
     except Exception as e:
         return jsonify({'error': f'Lỗi xử lý OCR/Translation: {str(e)}'}), 500
-
+#test web truy cập tra ve message
+@app.route('/test')
+def test():
+    return "Chào mừng bạn đến với ứng dụng OCR!"
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
