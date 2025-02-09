@@ -1,6 +1,6 @@
 Flask
 flask-cors
-paddleocr 
+paddleocr
+paddlepaddle==3.0.0rc1 -f https://www.paddlepaddle.org.cn/whl/linux/cpu/paddle_whl.html
 opencv-python
-paddlepaddle
 googletrans==4.0.0rc1
