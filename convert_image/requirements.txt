@@ -4,3 +4,6 @@ paddleocr
 opencv-python
 paddlepaddle
 transformers
+torch 
+torchvision 
+torchaudio

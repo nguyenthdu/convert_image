@@ -24,13 +24,7 @@
         <h1>Chuyển hình ảnh sang Excel</h1>
         <div class="input-group">
           <label for="folderInput">Chọn một thư mục chứa hình ảnh:</label>
-          <input
-            type="file"
-            id="folderInput"
-            webkitdirectory
-            directory
-            multiple
-          />
+          <input type="file" id="folderInput" webkitdirectory directory multiple />
         </div>
         <div class="input-group">
           <label class="checkbox-label">
@@ -41,7 +35,7 @@
         <div class="input-group" id="languageGroup">
           <label for="ocrLanguage">Chọn ngôn ngữ OCR:</label>
           <select id="ocrLanguage">
-            <!-- Giá trị này gửi xuống backend, ví dụ: "ch" cho Tiếng Trung, "en" cho Tiếng Anh, "vie" cho Tiếng Việt -->
+            <!-- Giá trị gửi xuống backend: "ch" cho Tiếng Trung, "en" cho Tiếng Anh, "vie" cho Tiếng Việt -->
             <option value="ch">Tiếng Trung</option>
             <option value="en">Tiếng Anh</option>
             <option value="vie">Tiếng Việt</option>
@@ -77,32 +71,17 @@
       <!-- ========== TAB UPDATE ========== -->
       <div id="updateTab" class="tab-content">
         <h2>Cập nhật phiên bản hình ảnh</h2>
-
         <div class="input-group">
-          <label for="excelFile"
-            >Chọn tệp Excel đã có danh sách hình ảnh (chỉ .xlsx):</label
-          >
+          <label for="excelFile">Chọn tệp Excel đã có danh sách hình ảnh (chỉ .xlsx):</label>
           <input type="file" id="excelFile" accept=".xlsx" />
         </div>
         <div class="input-group">
           <label for="versionName">Tên phiên bản (tên cột):</label>
-          <input
-            type="text"
-            id="versionName"
-            placeholder="vd: v2, version2..."
-          />
+          <input type="text" id="versionName" placeholder="vd: v2, version2..." />
         </div>
         <div class="input-group">
-          <label for="newImagesFolder"
-            >Chọn thư mục chứa danh sách hình ảnh muốn cập nhật:</label
-          >
-          <input
-            type="file"
-            id="newImagesFolder"
-            webkitdirectory
-            directory
-            multiple
-          />
+          <label for="newImagesFolder">Chọn thư mục chứa danh sách hình ảnh muốn cập nhật:</label>
+          <input type="file" id="newImagesFolder" webkitdirectory directory multiple />
         </div>
         <button id="updateBtn">Thêm phiên bản</button>
 
