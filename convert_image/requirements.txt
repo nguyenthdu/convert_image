@@ -1,0 +1,6 @@
+Flask
+flask-cors
+paddleocr 
+opencv-python
+paddlepaddle
+transformers

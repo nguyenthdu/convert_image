@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Version Management</title>
+    <!-- Liên kết file CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- ===== TAB CONTAINER ===== -->
+      <div class="tab-container">
+        <button class="tab-button active" onclick="switchTab('export')">
+          Chuyển hình ảnh sang Excel
+        </button>
+        <button class="tab-button" onclick="switchTab('update')">
+          Cập nhật phiên bản hình ảnh
+        </button>
+      </div>
+
+      <!-- ========== TAB EXPORT ========== -->
+      <div id="exportTab" class="tab-content active">
+        <h1>Chuyển hình ảnh sang Excel</h1>
+        <div class="input-group">
+          <label for="folderInput">Chọn một thư mục chứa hình ảnh:</label>
+          <input
+            type="file"
+            id="folderInput"
+            webkitdirectory
+            directory
+            multiple
+          />
+        </div>
+        <div class="input-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="enableOCR" />
+            Lấy nội dung từ hình ảnh (OCR)
+          </label>
+        </div>
+        <div class="input-group" id="languageGroup">
+          <label for="ocrLanguage">Chọn ngôn ngữ OCR:</label>
+          <select id="ocrLanguage">
+            <!-- Giá trị này gửi xuống backend, ví dụ: "ch" cho Tiếng Trung, "en" cho Tiếng Anh, "vie" cho Tiếng Việt -->
+            <option value="ch">Tiếng Trung</option>
+            <option value="en">Tiếng Anh</option>
+            <option value="vie">Tiếng Việt</option>
+          </select>
+        </div>
+        <!-- Phần chọn dịch -->
+        <div class="input-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="enableTranslation" />
+            Dịch nội dung
+          </label>
+        </div>
+        <div class="input-group" id="translationLanguageGroup" style="display: none;">
+          <label for="translationLanguage">Chọn ngôn ngữ đích:</label>
+          <select id="translationLanguage">
+            <option value="en">Tiếng Anh</option>
+            <option value="ch">Tiếng Trung</option>
+            <option value="vie">Tiếng Việt</option>
+          </select>
+        </div>
+        <button id="exportBtn">Xuất ra Excel</button>
+
+        <div id="progressContainer" class="progress-container">
+          <div class="progress-bar">
+            <div id="progress" class="progress"></div>
+          </div>
+          <p id="status"></p>
+        </div>
+        <p id="error" class="error"></p>
+      </div>
+      <!-- ========== END TAB EXPORT ========== -->
+
+      <!-- ========== TAB UPDATE ========== -->
+      <div id="updateTab" class="tab-content">
+        <h2>Cập nhật phiên bản hình ảnh</h2>
+
+        <div class="input-group">
+          <label for="excelFile"
+            >Chọn tệp Excel đã có danh sách hình ảnh (chỉ .xlsx):</label
+          >
+          <input type="file" id="excelFile" accept=".xlsx" />
+        </div>
+        <div class="input-group">
+          <label for="versionName">Tên phiên bản (tên cột):</label>
+          <input
+            type="text"
+            id="versionName"
+            placeholder="vd: v2, version2..."
+          />
+        </div>
+        <div class="input-group">
+          <label for="newImagesFolder"
+            >Chọn thư mục chứa danh sách hình ảnh muốn cập nhật:</label
+          >
+          <input
+            type="file"
+            id="newImagesFolder"
+            webkitdirectory
+            directory
+            multiple
+          />
+        </div>
+        <button id="updateBtn">Thêm phiên bản</button>
+
+        <div id="updateProgressContainer" class="progress-container">
+          <div class="progress-bar">
+            <div id="updateProgress" class="progress"></div>
+          </div>
+          <p id="updateStatus"></p>
+        </div>
+        <p id="updateError" class="error"></p>
+      </div>
+      <!-- ========== END TAB UPDATE ========== -->
+    </div>
+
+    <!-- ================== Thư viện bên ngoài ================== -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+
+    <!-- ================== File logic (JS) ================== -->
+    <script src="{{ url_for('static', filename='js/logic.js') }}"></script>
+  </body>
+</html>
