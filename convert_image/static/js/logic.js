@@ -133,42 +133,50 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
   try {
     errorElement.textContent = "";
 
-    // Gom các file theo từng subfolder
+    // Gom các file theo từng subfolder.
+    // Sử dụng thuộc tính webkitRelativePath để tách tên folder:
+    // Ví dụ: "ParentFolder/Subfolder1/File.jpg" → ParentFolder là tên folder cha, Subfolder1 là tên sheet.
     const folderMap = {};
     for (let file of files) {
-      if (!file.type.startsWith("image/")) continue;
+      // Kiểm tra định dạng file: chỉ xử lý file có type bắt đầu bằng "image/"
+      if (!file.type || !file.type.startsWith("image/")) continue;
       const pathParts = file.webkitRelativePath.split("/");
-      const subFolderPath = pathParts.slice(0, -1).join("/");
-      if (!folderMap[subFolderPath]) {
-        folderMap[subFolderPath] = [];
+      // Tên folder cha là phần tử đầu tiên
+      const parentFolder = pathParts[0];
+      // Tên subfolder: nếu có nhiều phần, chúng ta dùng phần giữa (từ index 1 đến trước file)
+      const subFolder = pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
+      // Dùng subFolder làm key; nếu subFolder rỗng, đặt là "RootFolder"
+      const key = subFolder ? subFolder : "RootFolder";
+      if (!folderMap[key]) {
+        folderMap[key] = [];
       }
-      folderMap[subFolderPath].push(file);
+      folderMap[key].push(file);
     }
 
-    const subFolderPaths = Object.keys(folderMap);
-    if (subFolderPaths.length === 0) {
+    const subFolderKeys = Object.keys(folderMap);
+    if (subFolderKeys.length === 0) {
       errorElement.textContent = "Không tìm thấy file hình ảnh hợp lệ trong thư mục.";
       return;
     }
 
-    // Xuất ra file Excel cho từng subfolder
-    for (const subFolderPath of subFolderPaths) {
-      const imageFiles = folderMap[subFolderPath];
+    // Lấy tên folder cha từ file đầu tiên
+    let parentFolderName = files[0].webkitRelativePath.split("/")[0];
+
+    // Tạo 1 workbook
+    const workbook = new ExcelJS.Workbook();
+
+    // Xử lý từng subfolder → tạo một sheet cho mỗi subfolder
+    for (const key of subFolderKeys) {
+      const imageFiles = folderMap[key];
       if (!imageFiles.length) continue;
 
-      let excelFileName = subFolderPath.replace(/\//g, "_");
-      if (!excelFileName) {
-        excelFileName = "RootFolder";
+      // Sử dụng key làm tên sheet, nếu quá 31 ký tự (giới hạn của Excel) thì cắt bớt
+      let sheetName = key;
+      if (sheetName.length > 31) {
+        sheetName = sheetName.substring(0, 31);
       }
-
-      updateProgress(
-        Math.round((subFolderPaths.indexOf(subFolderPath) / subFolderPaths.length) * 100),
-        `Thư mục "${subFolderPath}": Đang xử lý...`
-      );
-
-      // Tạo workbook và worksheet với ExcelJS, cấu hình 4 cột: Tên hình, Hình ảnh, Nội dung hình, Dịch
-      const workbook = new ExcelJS.Workbook();
-      const worksheet = workbook.addWorksheet("Images");
+      const worksheet = workbook.addWorksheet(sheetName);
+      // Cấu hình cột của sheet
       worksheet.columns = [
         { header: "Tên hình", key: "name", width: 30 },
         { header: "Hình ảnh", key: "image", width: 30 },
@@ -179,10 +187,11 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       let maxImageWidth = 0;
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
+        // Cập nhật progress theo từng file trong sheet
         const percent = Math.round(((i + 1) / imageFiles.length) * 100);
         updateProgress(
           percent,
-          `Thư mục "${subFolderPath}": Đang xử lý hình ảnh ${i + 1}/${imageFiles.length}`
+          `Sheet "${sheetName}": Đang xử lý hình ảnh ${i + 1}/${imageFiles.length}`
         );
 
         try {
@@ -198,7 +207,6 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
           ]);
 
           const dimensions = calculateImageDimensions(dimensionsData.width, dimensionsData.height);
-
           if (dimensions.width > maxImageWidth) {
             maxImageWidth = dimensions.width;
           }
@@ -208,7 +216,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             extension: file.name.split(".").pop(),
           });
 
-          // Thêm hàng vào worksheet với các trường: name, text (nội dung hình) và translation (nội dung dịch)
+          // Thêm hàng vào sheet với các trường: name, text (nội dung hình) và translation (nội dung dịch)
           const rowIndex = worksheet.addRow({
             name: file.name,
             text: ocrResult.text,
@@ -217,7 +225,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
           worksheet.getRow(rowIndex).height = dimensions.height + 5;
           worksheet.addImage(imageId, {
-            tl: { col: 1, row: rowIndex - 1 ,br: {col: 2, row: rowIndex - 1}},
+            tl: { col: 1, row: rowIndex - 1 },
             ext: dimensions,
             editAs: "oneCell",
           });
@@ -226,19 +234,20 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
         }
       }
       worksheet.getColumn(2).width = maxImageWidth / 7;
-
-      updateProgress(100, `Thư mục "${subFolderPath}": Đang xuất Excel...`);
-      const buffer = await workbook.xlsx.writeBuffer();
-      const blob = new Blob([buffer], {
-        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${excelFileName}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
     }
+
+    // Sau khi xử lý hết các sheet, xuất ra 1 file Excel với tên là tên folder cha
+    updateProgress(100, "Đang xuất Excel...");
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${parentFolderName}.xlsx`;
+    a.click();
+    URL.revokeObjectURL(url);
 
     updateProgress(100, "Xuất thành công!");
     setTimeout(() => {
@@ -289,11 +298,11 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     const workbook = new ExcelJS.Workbook();
     const excelData = await excelFile.arrayBuffer();
     await workbook.xlsx.load(excelData);
-    const worksheet = workbook.worksheets[0];
-
-    // Kiểm tra tên phiên bản đã tồn tại chưa
+    
+    // Kiểm tra tên phiên bản đã tồn tại trên sheet đầu tiên (giả sử các sheet đều có cùng header)
+    const firstSheet = workbook.worksheets[0];
     const headers = [];
-    worksheet.getRow(1).eachCell((cell) => {
+    firstSheet.getRow(1).eachCell((cell) => {
       headers.push(cell.value);
     });
     if (headers.includes(versionName)) {
@@ -301,59 +310,78 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
       return;
     }
 
-    // Xác định cột mới
-    let lastColumn = 1;
-    worksheet.getRow(1).eachCell((cell) => {
-      lastColumn = cell.col;
+    // Thêm cột phiên bản mới cho mỗi sheet
+    workbook.worksheets.forEach(sheet => {
+      let lastColumn = 1;
+      sheet.getRow(1).eachCell((cell) => {
+        lastColumn = cell.col;
+      });
+      const newColumnIndex = Math.max(5, lastColumn + 1);
+      sheet.getCell(1, newColumnIndex).value = versionName;
+      sheet.getColumn(newColumnIndex).width = 30;
+      // Lưu lại chỉ số cột mới vào thuộc tính của sheet để dùng sau
+      sheet.newColumnIndex = newColumnIndex;
     });
-    const newColumnIndex = Math.max(5, lastColumn + 1);
-    worksheet.getCell(1, newColumnIndex).value = versionName;
-    worksheet.getColumn(newColumnIndex).width = 30;
 
-    let processedCount = 0;
-    const totalRows = worksheet.rowCount;
+    // Tạo map các file từ newImagesFolder, phân loại theo folder con.
+    // Giả sử thuộc tính file.webkitRelativePath có dạng "ParentFolder/Subfolder/filename.jpg"
+    // Nếu không có subfolder thì đặt key là "RootFolder"
+    let imagesByFolder = {};
+    Array.from(newImagesFolder).forEach(file => {
+      // Kiểm tra định dạng file: chỉ xử lý file có type hợp lệ
+      if (!file.type || !file.type.startsWith("image/")) return;
+      const parts = file.webkitRelativePath.split("/");
+      const folderName = parts.length > 1 ? parts[1] : "RootFolder";
+      if (!imagesByFolder[folderName]) {
+        imagesByFolder[folderName] = [];
+      }
+      imagesByFolder[folderName].push(file);
+    });
+    // Nếu không tìm thấy bất kỳ folder nào, gán tất cả file vào "RootFolder"
+    if (Object.keys(imagesByFolder).length === 0) {
+      imagesByFolder["RootFolder"] = Array.from(newImagesFolder).filter(file => file.type && file.type.startsWith("image/"));
+    }
+    // Xử lý từng sheet trong workbook
+    for (const sheet of workbook.worksheets) {
+      const sheetName = sheet.name;
+      // Tìm các file có folder con trùng với tên sheet; nếu không có, sử dụng "RootFolder"
+      let matchingFiles = imagesByFolder[sheetName] || imagesByFolder["RootFolder"] || [];
+      
+      // Tạo map từ tên file đến file đối với matchingFiles
+      let newImagesMap = {};
+      matchingFiles.forEach(file => {
+        newImagesMap[file.name] = file;
+      });
 
-    for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
-      const imageName = worksheet.getCell(rowNumber, 1).value;
-      if (imageName && newImagesFolder && newImagesFolder.length > 0) {
-        // Tạo map cho hình ảnh mới
-        let newImages = {};
-        Array.from(newImagesFolder).forEach((file) => {
-          if (file.type.startsWith("image/")) {
-            newImages[file.name] = file;
-          }
-        });
-        if (newImages[imageName]) {
-          const newImageFile = newImages[imageName];
-          const [originalDimensions, base64Data] = await Promise.all([
+      let processedCount = 0;
+      const totalRows = sheet.rowCount;
+
+      for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
+        const imageName = sheet.getCell(rowNumber, 1).value;
+        if (imageName && newImagesMap[imageName]) {
+          const newImageFile = newImagesMap[imageName];
+          const [dimensionsData, base64Data] = await Promise.all([
             getImageDimensions(newImageFile),
             toBase64(newImageFile),
           ]);
-          const dimensions = calculateImageDimensions(
-            originalDimensions.width,
-            originalDimensions.height
-          );
-
+          const dimensions = calculateImageDimensions(dimensionsData.width, dimensionsData.height);
           const imageId = workbook.addImage({
             base64: base64Data,
             extension: newImageFile.name.split(".").pop(),
           });
-          worksheet.getRow(rowNumber).height = dimensions.height + 5;
-          worksheet.addImage(imageId, {
-            tl: {
-              col: newColumnIndex - 1,
-              row: rowNumber - 1,
-            },
+          sheet.getRow(rowNumber).height = dimensions.height + 5;
+          sheet.addImage(imageId, {
+            tl: { col: sheet.newColumnIndex - 1, row: rowNumber - 1 },
             ext: dimensions,
             editAs: "oneCell",
           });
         }
+        processedCount++;
+        updateVersionProgress(
+          Math.round((processedCount / totalRows) * 100),
+          `Sheet "${sheetName}": Đang xử lý ${processedCount} trên ${totalRows}...`
+        );
       }
-      processedCount++;
-      updateVersionProgress(
-        Math.round((processedCount / totalRows) * 100),
-        `Đang xử lý ${processedCount} trên ${totalRows}...`
-      );
     }
 
     updateVersionProgress(90, "Đang tải xuống...");
@@ -371,8 +399,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
 
     updateVersionProgress(100, "Thêm phiên bản thành công!");
     setTimeout(() => {
-      document.getElementById("updateProgressContainer").style.display =
-        "none";
+      document.getElementById("updateProgressContainer").style.display = "none";
       updateVersionProgress(0, "");
       location.reload();
     }, 2000);
