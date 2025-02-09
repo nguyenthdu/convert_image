@@ -3,7 +3,4 @@ flask-cors
 paddleocr 
 opencv-python
 paddlepaddle
-transformers
-torch 
-torchvision 
-torchaudio
+googletrans==4.0.0rc1

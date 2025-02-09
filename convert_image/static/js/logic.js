@@ -12,65 +12,6 @@ function switchTab(tabName) {
   document.getElementById(`${tabName}Tab`).classList.add("active");
 }
 
-// ==================== OPENCV PREPROCESSING ====================
-async function preprocessImage(file) {
-  return new Promise((resolve, reject) => {
-    console.log("Bắt đầu xử lý hình ảnh với OpenCV.js...");
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      // Đọc hình ảnh từ canvas
-      const src = cv.imread(canvas);
-      const gray = new cv.Mat();
-
-      // Chuyển sang grayscale
-      cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
-
-      // Tăng cường độ tương phản bằng CLAHE
-      const clahe = new cv.createCLAHE(2.0, new cv.Size(8, 8));
-      clahe.apply(gray, gray);
-
-      // Chuyển đổi ảnh sang đen trắng với adaptive thresholding
-      const binary = new cv.Mat();
-      cv.adaptiveThreshold(
-        gray,
-        binary,
-        255,
-        cv.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv.THRESH_BINARY,
-        11,
-        2
-      );
-
-      // Giảm nhiễu với Gaussian Blur
-      const ksize = new cv.Size(3, 3);
-      cv.GaussianBlur(binary, binary, ksize, 0, 0, cv.BORDER_DEFAULT);
-
-      cv.imshow(canvas, binary);
-      canvas.toBlob((blob) => resolve(blob));
-
-      src.delete();
-      gray.delete();
-      binary.delete();
-      URL.revokeObjectURL(url);
-    };
-
-    img.onerror = (error) => {
-      reject(error);
-      URL.revokeObjectURL(url);
-    };
-    img.src = url;
-  });
-}
-
 // ==================== OCR & Translation via API ====================
 async function recognizeTextViaAPI(file) {
   const formData = new FormData();
@@ -163,6 +104,12 @@ function calculateImageDimensions(originalWidth, originalHeight, maxWidth = 200,
 document.getElementById("enableOCR").addEventListener("change", function () {
   const languageGroup = document.getElementById("languageGroup");
   languageGroup.style.display = this.checked ? "block" : "none";
+  const translationGroup = document.getElementById("translationGroup");
+  if (this.checked) {
+    translationGroup.style.display = "block";
+  }else{
+    translationGroup.style.display = "none";
+  }
 });
 
 // Hiển thị/ẩn dropdown ngôn ngữ dịch
@@ -270,7 +217,7 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
           worksheet.getRow(rowIndex).height = dimensions.height + 5;
           worksheet.addImage(imageId, {
-            tl: { col: 1, row: rowIndex - 1 },
+            tl: { col: 1, row: rowIndex - 1 ,br: {col: 2, row: rowIndex - 1}},
             ext: dimensions,
             editAs: "oneCell",
           });

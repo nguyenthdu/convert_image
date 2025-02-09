@@ -33,27 +33,33 @@
           </label>
         </div>
         <div class="input-group" id="languageGroup">
-          <label for="ocrLanguage">Chọn ngôn ngữ OCR:</label>
+          <label for="ocrLanguage">Chọn ngôn ngữ nhận dạng trong hình ảnh:</label>
           <select id="ocrLanguage">
             <!-- Giá trị gửi xuống backend: "ch" cho Tiếng Trung, "en" cho Tiếng Anh, "vie" cho Tiếng Việt -->
             <option value="ch">Tiếng Trung</option>
             <option value="en">Tiếng Anh</option>
-            <option value="vie">Tiếng Việt</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="ja">Tiếng Nhật</option>
+            <option value="ko">Tiếng Hàn</option>
+            <option value="th">Tiếng Thái</option>
           </select>
         </div>
         <!-- Phần chọn dịch -->
-        <div class="input-group">
+        <div class="input-group" style="display: none;" id="translationGroup">
           <label class="checkbox-label">
             <input type="checkbox" id="enableTranslation" />
             Dịch nội dung
           </label>
         </div>
         <div class="input-group" id="translationLanguageGroup" style="display: none;">
-          <label for="translationLanguage">Chọn ngôn ngữ đích:</label>
+          <label for="translationLanguage">Chọn ngôn ngữ cần dịch:</label>
           <select id="translationLanguage">
             <option value="en">Tiếng Anh</option>
             <option value="ch">Tiếng Trung</option>
-            <option value="vie">Tiếng Việt</option>
+            <option value="vi">Tiếng Việt</option>
+            <option value="ja">Tiếng Nhật</option>
+            <option value="ko">Tiếng Hàn</option>
+            <option value="th">Tiếng Thái</option>
           </select>
         </div>
         <button id="exportBtn">Xuất ra Excel</button>
@@ -95,12 +101,10 @@
       </div>
       <!-- ========== END TAB UPDATE ========== -->
     </div>
-
-    <!-- ================== Thư viện bên ngoài ================== -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
-    <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
 
     <!-- ================== File logic (JS) ================== -->
     <script src="{{ url_for('static', filename='js/logic.js') }}"></script>
+    
   </body>
 </html>
