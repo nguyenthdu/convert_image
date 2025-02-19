@@ -1,24 +1,24 @@
-# Sử dụng image Python nền
-FROM python:3.10-slim-buster
+FROM python:3.8-slim-bullseye
 
-# Cập nhật danh sách gói và cài đặt các thư viện hệ thống cần thiết
-RUN apt-get update && apt-get install -y \
-    libgomp1 \
-    libgl1 \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+EXPOSE 8000
 
-# Copy toàn bộ mã nguồn vào thư mục /app
-COPY . /app
-
-# Chuyển đến thư mục làm việc trong container
+# 设置当前目录为工作目录
 WORKDIR /app
 
-# Cài đặt các gói phụ thuộc từ requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+COPY . /app
 
-# Khai báo cổng mà ứng dụng sẽ lắng nghe
-EXPOSE 5000
+# apt-get换源并安装依赖
+RUN sed -i "s@http://deb.debian.org@http://mirrors.tuna.tsinghua.edu.cn@g" /etc/apt/sources.list
+RUN cat /etc/apt/sources.list
+RUN apt-get update && apt-get install -y libgl1 libgomp1 libglib2.0-0 libsm6 libxrender1 libxext6
+# 清理apt-get缓存
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# pip换源并安装python依赖
+RUN python3 -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple --upgrade pip
+RUN pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip3 install -r requirements.txt
 
 # Khởi chạy ứng dụng khi container được khởi động
 CMD ["python", "app.py"]
+#bỏ thư mục venv vào .dockerignore

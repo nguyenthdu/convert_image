@@ -57,7 +57,7 @@ def ocr():
         for line in results:
             for res in line:
                 if res is not None and len(res) > 1:
-                    recognized_text += res[1][0] + "\n"
+                    recognized_text += res[1][0] + ""
         recognized_text = recognized_text.strip()
 
         # Nếu không lấy được nội dung hoặc không yêu cầu dịch (hoặc target trùng với ngôn ngữ nguồn) → trả về kết quả OCR
