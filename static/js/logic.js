@@ -15,35 +15,35 @@ function switchTab(tabName) {
 // ==================== OCR & Translation via API ====================
 async function recognizeTextViaAPI(file) {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append("image", file);
 
   // Lấy ngôn ngữ OCR (nguồn) từ giao diện
   const language = document.getElementById("ocrLanguage").value;
-  formData.append('language', language);
+  formData.append("language", language);
 
   // Nếu chức năng dịch được bật, lấy thêm ngôn ngữ đích
-  const enableTranslation = document.getElementById("enableTranslation").checked;
+  const enableTranslation =
+    document.getElementById("enableTranslation").checked;
   if (enableTranslation) {
     const targetLanguage = document.getElementById("translationLanguage").value;
-    formData.append('target_language', targetLanguage);
+    formData.append("target_language", targetLanguage);
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/ocr', {
-      method: 'POST',
+    const response = await fetch("http://localhost:5000/api/ocr", {
+      method: "POST",
       body: formData,
     });
     const result = await response.json();
     if (response.ok) {
       // Trả về đối tượng gồm 2 trường: text (nội dung hình) và translation (nội dung dịch)
-         //log
-         console.log("Nội dung hình:", result.text);
-         console.log("Dịch:", result.translation);
+      //log
+      console.log("Nội dung hình:", result.text);
+      console.log("Dịch:", result.translation);
       return {
         text: result.text,
-        translation: result.translation
+        translation: result.translation,
       };
-   
     } else {
       console.error("Lỗi từ backend:", result.error);
       return { text: "Không lấy được nội dung", translation: "" };
@@ -92,7 +92,12 @@ function getImageDimensions(file) {
   });
 }
 
-function calculateImageDimensions(originalWidth, originalHeight, maxWidth = 200, maxHeight = 100) {
+function calculateImageDimensions(
+  originalWidth,
+  originalHeight,
+  maxWidth = 200,
+  maxHeight = 100
+) {
   const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
   return {
     width: Math.floor(originalWidth * ratio),
@@ -107,16 +112,20 @@ document.getElementById("enableOCR").addEventListener("change", function () {
   const translationGroup = document.getElementById("translationGroup");
   if (this.checked) {
     translationGroup.style.display = "block";
-  }else{
+  } else {
     translationGroup.style.display = "none";
   }
 });
 
 // Hiển thị/ẩn dropdown ngôn ngữ dịch
-document.getElementById("enableTranslation").addEventListener("change", function () {
-  const translationGroup = document.getElementById("translationLanguageGroup");
-  translationGroup.style.display = this.checked ? "block" : "none";
-});
+document
+  .getElementById("enableTranslation")
+  .addEventListener("change", function () {
+    const translationGroup = document.getElementById(
+      "translationLanguageGroup"
+    );
+    translationGroup.style.display = this.checked ? "block" : "none";
+  });
 
 // ==================== XUẤT RA EXCEL ====================
 document.getElementById("exportBtn").addEventListener("click", async () => {
@@ -144,7 +153,8 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       // Tên folder cha là phần tử đầu tiên
       const parentFolder = pathParts[0];
       // Tên subfolder: nếu có nhiều phần, chúng ta dùng phần giữa (từ index 1 đến trước file)
-      const subFolder = pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
+      const subFolder =
+        pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
       // Dùng subFolder làm key; nếu subFolder rỗng, đặt là "RootFolder"
       const key = subFolder ? subFolder : "RootFolder";
       if (!folderMap[key]) {
@@ -155,7 +165,8 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
     const subFolderKeys = Object.keys(folderMap);
     if (subFolderKeys.length === 0) {
-      errorElement.textContent = "Không tìm thấy file hình ảnh hợp lệ trong thư mục.";
+      errorElement.textContent =
+        "Không tìm thấy file hình ảnh hợp lệ trong thư mục.";
       return;
     }
 
@@ -180,8 +191,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       worksheet.columns = [
         { header: "Tên hình", key: "name", width: 30 },
         { header: "Hình ảnh", key: "image", width: 30 },
+        { header: "Thông tin hình", key: "imageInfo", width: 30 }, // Thêm cột mới
         { header: "Nội dung hình", key: "text", width: 40 },
-        { header: "Dịch", key: "translation", width: 50 }
+        { header: "Dịch", key: "translation", width: 50 },
       ];
 
       let maxImageWidth = 0;
@@ -191,7 +203,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
         const percent = Math.round(((i + 1) / imageFiles.length) * 100);
         updateProgress(
           percent,
-          `Sheet "${sheetName}": Đang xử lý hình ảnh ${i + 1}/${imageFiles.length}`
+          `Sheet "${sheetName}": Đang xử lý hình ảnh ${i + 1}/${
+            imageFiles.length
+          }`
         );
 
         try {
@@ -206,10 +220,17 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             recognitionPromise,
           ]);
 
-          const dimensions = calculateImageDimensions(dimensionsData.width, dimensionsData.height);
+          const dimensions = calculateImageDimensions(
+            dimensionsData.width,
+            dimensionsData.height
+          );
           if (dimensions.width > maxImageWidth) {
             maxImageWidth = dimensions.width;
           }
+
+          // Tạo chuỗi thông tin hình ảnh
+          const fileSizeKB = (file.size / 1024).toFixed(2);
+          const imageInfo = `Kích thước gốc: ${dimensionsData.width}x${dimensionsData.height} px${"\n"}Dung lượng: ${fileSizeKB} KB${"\n"}Định dạng: ${file.type}`;
 
           const imageId = workbook.addImage({
             base64: base64Data,
@@ -219,8 +240,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
           // Thêm hàng vào sheet với các trường: name, text (nội dung hình) và translation (nội dung dịch)
           const rowIndex = worksheet.addRow({
             name: file.name,
+            imageInfo: imageInfo,
             text: ocrResult.text,
-            translation: ocrResult.translation
+            translation: ocrResult.translation,
           }).number;
 
           worksheet.getRow(rowIndex).height = dimensions.height + 5;
@@ -298,7 +320,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     const workbook = new ExcelJS.Workbook();
     const excelData = await excelFile.arrayBuffer();
     await workbook.xlsx.load(excelData);
-    
+
     // Kiểm tra tên phiên bản đã tồn tại trên sheet đầu tiên (giả sử các sheet đều có cùng header)
     const firstSheet = workbook.worksheets[0];
     const headers = [];
@@ -311,7 +333,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     }
 
     // Thêm cột phiên bản mới cho mỗi sheet
-    workbook.worksheets.forEach(sheet => {
+    workbook.worksheets.forEach((sheet) => {
       let lastColumn = 1;
       sheet.getRow(1).eachCell((cell) => {
         lastColumn = cell.col;
@@ -327,7 +349,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     // Giả sử thuộc tính file.webkitRelativePath có dạng "ParentFolder/Subfolder/filename.jpg"
     // Nếu không có subfolder thì đặt key là "RootFolder"
     let imagesByFolder = {};
-    Array.from(newImagesFolder).forEach(file => {
+    Array.from(newImagesFolder).forEach((file) => {
       // Kiểm tra định dạng file: chỉ xử lý file có type hợp lệ
       if (!file.type || !file.type.startsWith("image/")) return;
       const parts = file.webkitRelativePath.split("/");
@@ -339,17 +361,20 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     });
     // Nếu không tìm thấy bất kỳ folder nào, gán tất cả file vào "RootFolder"
     if (Object.keys(imagesByFolder).length === 0) {
-      imagesByFolder["RootFolder"] = Array.from(newImagesFolder).filter(file => file.type && file.type.startsWith("image/"));
+      imagesByFolder["RootFolder"] = Array.from(newImagesFolder).filter(
+        (file) => file.type && file.type.startsWith("image/")
+      );
     }
     // Xử lý từng sheet trong workbook
     for (const sheet of workbook.worksheets) {
       const sheetName = sheet.name;
       // Tìm các file có folder con trùng với tên sheet; nếu không có, sử dụng "RootFolder"
-      let matchingFiles = imagesByFolder[sheetName] || imagesByFolder["RootFolder"] || [];
-      
+      let matchingFiles =
+        imagesByFolder[sheetName] || imagesByFolder["RootFolder"] || [];
+
       // Tạo map từ tên file đến file đối với matchingFiles
       let newImagesMap = {};
-      matchingFiles.forEach(file => {
+      matchingFiles.forEach((file) => {
         newImagesMap[file.name] = file;
       });
 
@@ -364,7 +389,10 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
             getImageDimensions(newImageFile),
             toBase64(newImageFile),
           ]);
-          const dimensions = calculateImageDimensions(dimensionsData.width, dimensionsData.height);
+          const dimensions = calculateImageDimensions(
+            dimensionsData.width,
+            dimensionsData.height
+          );
           const imageId = workbook.addImage({
             base64: base64Data,
             extension: newImageFile.name.split(".").pop(),
