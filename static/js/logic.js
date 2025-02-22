@@ -251,6 +251,13 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             ext: dimensions,
             editAs: "oneCell",
           });
+          // Set wrap text for specific columns
+worksheet.getCell(`A${rowIndex}`).alignment = { wrapText: true }; // name column
+worksheet.getCell(`B${rowIndex}`).alignment = { wrapText: true }; // image column
+worksheet.getCell(`C${rowIndex}`).alignment = { wrapText: true }; // imageInfo column
+worksheet.getCell(`D${rowIndex}`).alignment = { wrapText: true }; // text column
+worksheet.getCell(`E${rowIndex}`).alignment = { wrapText: true }; // translation column
+
         } catch (error) {
           console.error(`Lỗi xử lý hình ảnh ${file.name}:`, error);
         }
