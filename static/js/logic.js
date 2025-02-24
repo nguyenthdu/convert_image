@@ -46,11 +46,11 @@ async function recognizeTextViaAPI(file) {
       };
     } else {
       console.error("Lỗi từ backend:", result.error);
-      return { text: "Không lấy được nội dung", translation: "" };
+      return { text: "", translation: "" };
     }
   } catch (error) {
     console.error("Lỗi khi gọi API:", error);
-    return { text: "Không lấy được nội dung", translation: "" };
+    return { text: "", translation: "" };
   }
 }
 
@@ -230,7 +230,11 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
           // Tạo chuỗi thông tin hình ảnh
           const fileSizeKB = (file.size / 1024).toFixed(2);
-          const imageInfo = `Kích thước gốc: ${dimensionsData.width}x${dimensionsData.height} px${"\n"}Dung lượng: ${fileSizeKB} KB${"\n"}Định dạng: ${file.type}`;
+          const imageInfo = `Kích thước gốc: ${dimensionsData.width}x${
+            dimensionsData.height
+          } px${"\n"}Dung lượng: ${fileSizeKB} KB${"\n"}Định dạng: ${
+            file.type
+          }`;
 
           const imageId = workbook.addImage({
             base64: base64Data,
@@ -252,12 +256,11 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             editAs: "oneCell",
           });
           // Set wrap text for specific columns
-worksheet.getCell(`A${rowIndex}`).alignment = { wrapText: true }; // name column
-worksheet.getCell(`B${rowIndex}`).alignment = { wrapText: true }; // image column
-worksheet.getCell(`C${rowIndex}`).alignment = { wrapText: true }; // imageInfo column
-worksheet.getCell(`D${rowIndex}`).alignment = { wrapText: true }; // text column
-worksheet.getCell(`E${rowIndex}`).alignment = { wrapText: true }; // translation column
-
+          worksheet.getCell(`A${rowIndex}`).alignment = { wrapText: true }; // name column
+          worksheet.getCell(`B${rowIndex}`).alignment = { wrapText: true }; // image column
+          worksheet.getCell(`C${rowIndex}`).alignment = { wrapText: true }; // imageInfo column
+          worksheet.getCell(`D${rowIndex}`).alignment = { wrapText: true }; // text column
+          worksheet.getCell(`E${rowIndex}`).alignment = { wrapText: true }; // translation column
         } catch (error) {
           console.error(`Lỗi xử lý hình ảnh ${file.name}:`, error);
         }

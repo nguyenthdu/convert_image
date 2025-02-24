@@ -4,6 +4,16 @@ import cv2
 import numpy as np
 from paddleocr import PaddleOCR  # Sử dụng PaddleOCR cho nhận dạng OCR
 from googletrans import Translator  # Import googletrans
+import os
+
+def display_ascii_art():
+    try:
+        art_path = os.path.join(os.path.dirname(__file__), 'asciiart.txt')
+        with open(art_path, 'r', encoding='utf-8') as f:
+            ascii_art = f.read()
+        print(ascii_art)
+    except Exception as e:
+        print(f"Could not load ASCII art: {str(e)}")
 
 app = Flask(__name__)# Khởi tạo Flask app
 CORS(app)## CORS cho phép giao tiếp giữa các domain khác nhau
@@ -89,4 +99,5 @@ def ocr():
 def test():
     return "Chào mừng bạn đến với ứng dụng OCR!"
 if __name__ == '__main__':
+    display_ascii_art()  # Display ASCII art when starting the program
     app.run(debug=True, host='0.0.0.0', port=5000)
