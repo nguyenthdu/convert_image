@@ -15,42 +15,42 @@ function switchTab(tabName) {
 // ==================== OCR & Translation via API ====================
 async function recognizeTextViaAPI(file) {
   const formData = new FormData();
-  formData.append('image', file);
+  formData.append("image", file);
 
   // Lấy ngôn ngữ OCR (nguồn) từ giao diện
   const language = document.getElementById("ocrLanguage").value;
-  formData.append('language', language);
+  formData.append("language", language);
 
   // Nếu chức năng dịch được bật, lấy thêm ngôn ngữ đích
-  const enableTranslation = document.getElementById("enableTranslation").checked;
+  const enableTranslation =
+    document.getElementById("enableTranslation").checked;
   if (enableTranslation) {
     const targetLanguage = document.getElementById("translationLanguage").value;
-    formData.append('target_language', targetLanguage);
+    formData.append("target_language", targetLanguage);
   }
 
   try {
-    const response = await fetch('http://localhost:5000/api/ocr', {
-      method: 'POST',
+    const response = await fetch("http://localhost:5000/api/ocr", {
+      method: "POST",
       body: formData,
     });
     const result = await response.json();
     if (response.ok) {
       // Trả về đối tượng gồm 2 trường: text (nội dung hình) và translation (nội dung dịch)
-         //log
-         console.log("Nội dung hình:", result.text);
-         console.log("Dịch:", result.translation);
+      //log
+      console.log("Nội dung hình:", result.text);
+      console.log("Dịch:", result.translation);
       return {
         text: result.text,
-        translation: result.translation
+        translation: result.translation,
       };
-   
     } else {
       console.error("Lỗi từ backend:", result.error);
-      return { text: "Không lấy được nội dung", translation: "" };
+      return { text: "", translation: "" };
     }
   } catch (error) {
     console.error("Lỗi khi gọi API:", error);
-    return { text: "Không lấy được nội dung", translation: "" };
+    return { text: "", translation: "" };
   }
 }
 
@@ -92,7 +92,12 @@ function getImageDimensions(file) {
   });
 }
 
-function calculateImageDimensions(originalWidth, originalHeight, maxWidth = 200, maxHeight = 100) {
+function calculateImageDimensions(
+  originalWidth,
+  originalHeight,
+  maxWidth = 200,
+  maxHeight = 100
+) {
   const ratio = Math.min(maxWidth / originalWidth, maxHeight / originalHeight);
   return {
     width: Math.floor(originalWidth * ratio),
@@ -107,16 +112,20 @@ document.getElementById("enableOCR").addEventListener("change", function () {
   const translationGroup = document.getElementById("translationGroup");
   if (this.checked) {
     translationGroup.style.display = "block";
-  }else{
+  } else {
     translationGroup.style.display = "none";
   }
 });
 
 // Hiển thị/ẩn dropdown ngôn ngữ dịch
-document.getElementById("enableTranslation").addEventListener("change", function () {
-  const translationGroup = document.getElementById("translationLanguageGroup");
-  translationGroup.style.display = this.checked ? "block" : "none";
-});
+document
+  .getElementById("enableTranslation")
+  .addEventListener("change", function () {
+    const translationGroup = document.getElementById(
+      "translationLanguageGroup"
+    );
+    translationGroup.style.display = this.checked ? "block" : "none";
+  });
 
 // ==================== XUẤT RA EXCEL ====================
 document.getElementById("exportBtn").addEventListener("click", async () => {
@@ -144,9 +153,10 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       // Tên folder cha là phần tử đầu tiên
       const parentFolder = pathParts[0];
       // Tên subfolder: nếu có nhiều phần, chúng ta dùng phần giữa (từ index 1 đến trước file)
-      const subFolder = pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
+      const subFolder =
+        pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
       // Dùng subFolder làm key; nếu subFolder rỗng, đặt là "RootFolder"
-      const key = subFolder ? subFolder : "RootFolder";
+      const key = subFolder ? subFolder : parentFolder;
       if (!folderMap[key]) {
         folderMap[key] = [];
       }
@@ -155,7 +165,8 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
 
     const subFolderKeys = Object.keys(folderMap);
     if (subFolderKeys.length === 0) {
-      errorElement.textContent = "Không tìm thấy file hình ảnh hợp lệ trong thư mục.";
+      errorElement.textContent =
+        "Không tìm thấy file hình ảnh hợp lệ trong thư mục.";
       return;
     }
 
@@ -180,8 +191,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
       worksheet.columns = [
         { header: "Tên hình", key: "name", width: 30 },
         { header: "Hình ảnh", key: "image", width: 30 },
+        { header: "Thông tin hình", key: "imageInfo", width: 30 }, // Thêm cột mới
         { header: "Nội dung hình", key: "text", width: 40 },
-        { header: "Dịch", key: "translation", width: 50 }
+        { header: "Dịch", key: "translation", width: 50 },
       ];
 
       let maxImageWidth = 0;
@@ -191,7 +203,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
         const percent = Math.round(((i + 1) / imageFiles.length) * 100);
         updateProgress(
           percent,
-          `Sheet "${sheetName}": Đang xử lý hình ảnh ${i + 1}/${imageFiles.length}`
+          `Sheet "${sheetName}": Đang xử lý hình ảnh ${i + 1}/${
+            imageFiles.length
+          }`
         );
 
         try {
@@ -206,10 +220,21 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             recognitionPromise,
           ]);
 
-          const dimensions = calculateImageDimensions(dimensionsData.width, dimensionsData.height);
+          const dimensions = calculateImageDimensions(
+            dimensionsData.width,
+            dimensionsData.height
+          );
           if (dimensions.width > maxImageWidth) {
             maxImageWidth = dimensions.width;
           }
+
+          // Tạo chuỗi thông tin hình ảnh
+          const fileSizeKB = (file.size / 1024).toFixed(2);
+          const imageInfo = `Kích thước gốc: ${dimensionsData.width}x${
+            dimensionsData.height
+          } px${"\n"}Dung lượng: ${fileSizeKB} KB${"\n"}Định dạng: ${
+            file.type
+          }`;
 
           const imageId = workbook.addImage({
             base64: base64Data,
@@ -219,8 +244,9 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
           // Thêm hàng vào sheet với các trường: name, text (nội dung hình) và translation (nội dung dịch)
           const rowIndex = worksheet.addRow({
             name: file.name,
+            imageInfo: imageInfo,
             text: ocrResult.text,
-            translation: ocrResult.translation
+            translation: ocrResult.translation,
           }).number;
 
           worksheet.getRow(rowIndex).height = dimensions.height + 5;
@@ -229,6 +255,12 @@ document.getElementById("exportBtn").addEventListener("click", async () => {
             ext: dimensions,
             editAs: "oneCell",
           });
+          // Set wrap text for specific columns
+          worksheet.getCell(`A${rowIndex}`).alignment = { wrapText: true }; // name column
+          worksheet.getCell(`B${rowIndex}`).alignment = { wrapText: true }; // image column
+          worksheet.getCell(`C${rowIndex}`).alignment = { wrapText: true }; // imageInfo column
+          worksheet.getCell(`D${rowIndex}`).alignment = { wrapText: true }; // text column
+          worksheet.getCell(`E${rowIndex}`).alignment = { wrapText: true }; // translation column
         } catch (error) {
           console.error(`Lỗi xử lý hình ảnh ${file.name}:`, error);
         }
@@ -272,6 +304,7 @@ function updateVersionProgress(percent, status) {
   statusElement.textContent = status;
 }
 
+// ==================== CẬP NHẬT PHIÊN BẢN ====================
 document.getElementById("updateBtn").addEventListener("click", async () => {
   const excelFile = document.getElementById("excelFile").files[0];
   const versionName = document.getElementById("versionName").value.trim();
@@ -298,8 +331,8 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
     const workbook = new ExcelJS.Workbook();
     const excelData = await excelFile.arrayBuffer();
     await workbook.xlsx.load(excelData);
-    
-    // Kiểm tra tên phiên bản đã tồn tại trên sheet đầu tiên (giả sử các sheet đều có cùng header)
+
+    // 1) Kiểm tra xem versionName đã tồn tại chưa
     const firstSheet = workbook.worksheets[0];
     const headers = [];
     firstSheet.getRow(1).eachCell((cell) => {
@@ -310,7 +343,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
       return;
     }
 
-    // Thêm cột phiên bản mới cho mỗi sheet
+    // 2) Tạo cột mới (versionName) cho mỗi sheet
     workbook.worksheets.forEach(sheet => {
       let lastColumn = 1;
       sheet.getRow(1).eachCell((cell) => {
@@ -319,35 +352,29 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
       const newColumnIndex = Math.max(5, lastColumn + 1);
       sheet.getCell(1, newColumnIndex).value = versionName;
       sheet.getColumn(newColumnIndex).width = 30;
-      // Lưu lại chỉ số cột mới vào thuộc tính của sheet để dùng sau
+      // Lưu chỉ số cột mới vào sheet để dùng khi chèn ảnh
       sheet.newColumnIndex = newColumnIndex;
     });
 
-    // Tạo map các file từ newImagesFolder, phân loại theo folder con.
-    // Giả sử thuộc tính file.webkitRelativePath có dạng "ParentFolder/Subfolder/filename.jpg"
-    // Nếu không có subfolder thì đặt key là "RootFolder"
+    // 3) Gom file ảnh mới theo subfolder, THỐNG NHẤT với logic lúc xuất Excel
     let imagesByFolder = {};
     Array.from(newImagesFolder).forEach(file => {
-      // Kiểm tra định dạng file: chỉ xử lý file có type hợp lệ
       if (!file.type || !file.type.startsWith("image/")) return;
-      const parts = file.webkitRelativePath.split("/");
-      const folderName = parts.length > 1 ? parts[1] : "RootFolder";
-      if (!imagesByFolder[folderName]) {
-        imagesByFolder[folderName] = [];
+      const pathParts = file.webkitRelativePath.split("/");
+      const subFolder = pathParts.length > 2 ? pathParts.slice(1, -1).join("/") : "";
+      const key = subFolder ? subFolder : pathParts[0];
+      if (!imagesByFolder[key]) {
+        imagesByFolder[key] = [];
       }
-      imagesByFolder[folderName].push(file);
+      imagesByFolder[key].push(file);
     });
-    // Nếu không tìm thấy bất kỳ folder nào, gán tất cả file vào "RootFolder"
-    if (Object.keys(imagesByFolder).length === 0) {
-      imagesByFolder["RootFolder"] = Array.from(newImagesFolder).filter(file => file.type && file.type.startsWith("image/"));
-    }
-    // Xử lý từng sheet trong workbook
+
+    // 4) Duyệt từng sheet và chèn ảnh mới vào cột mới
     for (const sheet of workbook.worksheets) {
       const sheetName = sheet.name;
-      // Tìm các file có folder con trùng với tên sheet; nếu không có, sử dụng "RootFolder"
-      let matchingFiles = imagesByFolder[sheetName] || imagesByFolder["RootFolder"] || [];
-      
-      // Tạo map từ tên file đến file đối với matchingFiles
+      // Tìm file theo sheetName (nếu không có thì dùng RootFolder)
+      let matchingFiles = imagesByFolder[sheetName] || imagesByFolder[0] || [];
+      // Tạo map { fileName: file }
       let newImagesMap = {};
       matchingFiles.forEach(file => {
         newImagesMap[file.name] = file;
@@ -357,8 +384,10 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
       const totalRows = sheet.rowCount;
 
       for (let rowNumber = 2; rowNumber <= totalRows; rowNumber++) {
+        // Lấy tên hình ở cột 1
         const imageName = sheet.getCell(rowNumber, 1).value;
         if (imageName && newImagesMap[imageName]) {
+          // Chèn ảnh vào cột newColumnIndex
           const newImageFile = newImagesMap[imageName];
           const [dimensionsData, base64Data] = await Promise.all([
             getImageDimensions(newImageFile),
@@ -369,6 +398,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
             base64: base64Data,
             extension: newImageFile.name.split(".").pop(),
           });
+          // Tăng chiều cao row cho phù hợp
           sheet.getRow(rowNumber).height = dimensions.height + 5;
           sheet.addImage(imageId, {
             tl: { col: sheet.newColumnIndex - 1, row: rowNumber - 1 },
@@ -384,6 +414,7 @@ document.getElementById("updateBtn").addEventListener("click", async () => {
       }
     }
 
+    // 5) Lưu file Excel mới
     updateVersionProgress(90, "Đang tải xuống...");
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
